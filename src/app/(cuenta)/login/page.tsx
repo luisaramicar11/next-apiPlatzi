@@ -1,9 +1,10 @@
 'use client';
 import { FormEvent } from 'react';
-import { useRouter } from 'next/navigation'; 
-import { BodyRequestLogin, BodyResponseLogin } from "../../_interfaces/interfaces";
-import { toast } from "react-toastify";
-import styled from "styled-components";
+import { useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks/reduxHooks';
+import { loginUser } from '../../redux/slices/authSlice';
+import { toast } from 'react-toastify';
+import styled from 'styled-components';
 
 const Form = styled.form`
   padding: 15px;
@@ -59,66 +60,51 @@ const Button = styled.button`
 `;
 
 export default function LoginPage() {
-  const domain = 'https://api.escuelajs.co';
-  const router = useRouter(); 
- 
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { loading } = useAppSelector((state) => state.auth); 
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
- 
+
     const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
     if (!email || !password) {
-      toast.error("Por favor, completa todos los campos.");
+      toast.error('Por favor, completa todos los campos.');
       return;
     }
 
-    const userData: BodyRequestLogin = {
-        email,
-        password
-    };
+    // Despachar la acción asíncrona de login
+    const resultAction = await dispatch(loginUser({ email, password }));
 
-    const headers: Record<string, string> = {
-      'accept': '*/*',
-      'Content-Type': 'application/json',
-    };
-
-    const reqOptions: RequestInit = {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(userData),
-    };
-
-    try {
-      const response: Response = await fetch(`${domain}/api/v1/auth/login`, reqOptions);
-      const responseBodyLogin: BodyResponseLogin = await response.json();
-      const token: string | null = responseBodyLogin.access_token;
-      
+    if (loginUser.fulfilled.match(resultAction)) {
+      const token = resultAction.payload?.access_token;
       if (token) {
-        console.log('Login exitoso. Token:', token);
-        toast.success("Login exitoso!");
+        toast.success('Login exitoso!');
         localStorage.setItem('authToken', token);
-        router.push('/profile'); // Utiliza 'router.push' para redirigir
-      } else {
-        toast.error("Login fallido.");
+        router.push('/profile');
       }
-    } catch (error) {
-      toast.error("Error al intentar iniciar sesión.");
-      console.error("Error:", error);
+    } else {
+      if (resultAction.payload) {
+        toast.error(`Login fallido: ${resultAction.payload}`);
+      } else {
+        toast.error('Error al intentar iniciar sesión.');
+      }
     }
   }
- 
+
   return (
-    
     <Div>
-        <Title>Ingresar</Title>
-    <Form onSubmit={handleSubmit}>
-      <Input type="email" name="email" placeholder="Email" required />
-      <Input type="password" name="password" placeholder="Password" required />
-      <Button type="submit">Login</Button>
-    </Form>
+      <Title>Ingresar</Title>
+      <Form onSubmit={handleSubmit}>
+        <Input type="email" name="email" placeholder="Email" required />
+        <Input type="password" name="password" placeholder="Password" required />
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Cargando...' : 'Login'}
+        </Button>
+      </Form>
     </Div>
-    
   );
 }

@@ -1,6 +1,8 @@
 import React from "react";
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 import styled from "styled-components";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../redux/slices/authSlice"; 
 
 const Button = styled.button`
   color: #000;
@@ -11,13 +13,19 @@ const Button = styled.button`
   font-size: 16px;
   font-weight: bold;
   transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
 `;
 
 const LogoutButton: React.FC = () => {
+  const dispatch = useDispatch();
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); 
+    dispatch(logoutUser());
+    localStorage.removeItem("authToken");
     router.push("/login");
   };
 
