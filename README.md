@@ -41,6 +41,6 @@ Sigue estos pasos para instalar y configurar el proyecto en tu entorno local:
 1. **Clona este repositorio:**
 
    ```bash
-   git clone https://github.com/tu-usuario/users-products-management-app.git
+   git clone https://github.com/luisaramicar11/next-apiPlatzi.git
    cd users-products-management-app
 
