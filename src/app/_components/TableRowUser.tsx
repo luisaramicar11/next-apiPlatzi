@@ -62,7 +62,6 @@ interface TableRowProps {
 
 const TableRowUser: React.FC<TableRowProps> = ({ user, setDataToEdit, deleteData }) => {
   const { id, name, email, role, avatar } = user;
-
   return (
     <Tr>
       <Td>{name}</Td>

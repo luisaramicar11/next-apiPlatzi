@@ -1,4 +1,5 @@
 "use client"
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -55,31 +56,64 @@ const Products: React.FC = () => {
 
   const handleCreateProduct = async (newProduct: Product) => {
     try {
-      // Ajustar el producto para que envíe categoryId en lugar de category
+      // Limpiar y validar URLs de imágenes
+      const validImages = newProduct.images
+        .map(image => image.trim())
+        .filter(image => {
+          try {
+            new URL(image); // Verificar que la URL es válida
+            return true;
+          } catch {
+            return false;
+          }
+        });
+  
+      // Si no hay imágenes válidas, lanzar un error
+      if (validImages.length === 0) {
+        throw new Error("Debe proporcionar al menos una URL de imagen válida.");
+      }
+  
+      // Ajustar el producto para enviar el categoryId y las imágenes validadas
       const productToSend = {
         ...newProduct,
-        categoryId: newProduct.category.id, // Enviar solo el ID de la categoría
-        category: undefined // Opcional: si no se necesita en el cuerpo de la solicitud
+        categoryId: newProduct.category.id,
+        images: validImages, // Usar las URLs de imágenes validadas y limpiadas
+        price: Number(newProduct.price), // Asegurar que el precio sea un número
+        category: undefined, // No enviar la categoría completa
       };
+      console.log(productToSend)
   
+      // Realizar la solicitud para crear el producto
       const response = await axios.post("https://api.escuelajs.co/api/v1/products", productToSend);
       dispatch(createProduct(response.data));
       toast.success("Producto creado exitosamente!");
-    } catch (error) {
+    } catch (error: any) {
       if (axios.isAxiosError(error)) {
         console.error("Detalles del error:", error.response?.data);
       } else {
-        console.error("Error inesperado:", error);
+        console.error("Error inesperado:", error.message);
       }
       toast.error("Error al crear el producto.");
     }
   };
+
+  
+  function cleanImageUrl(imageString: string): string {
+    // Elimina los corchetes y comillas del string
+    const cleanedString = imageString
+      .replace(/^\["/, '') // Quita el inicio con [" 
+      .replace(/"\]$/, '') // Quita el final con "]
+      .replace(/\\\"/g, '"'); // Reemplaza las comillas escapadas por comillas normales
+  
+    return cleanedString;
+  }
   
   const handleUpdateProduct = async (updatedProduct: Product) => {
     try {
       // Preparar el producto para enviar solo el categoryId en lugar de la categoría completa
       const productToUpdate = {
         ...updatedProduct,
+        images: [cleanImageUrl(updatedProduct.images[0])],
         categoryId: updatedProduct.category.id, // Enviar solo el ID de la categoría
         category: undefined // Opcional: si no se necesita en el cuerpo de la solicitud
       };
@@ -88,6 +122,7 @@ const Products: React.FC = () => {
         `https://api.escuelajs.co/api/v1/products/${updatedProduct.id}`,
         productToUpdate
       );
+      console.log(productToUpdate)
   
       // Actualizar el producto en el estado global
       dispatch(updateProduct(response.data)); // Usar los datos actualizados recibidos de la API
@@ -105,7 +140,6 @@ const Products: React.FC = () => {
     }
   };
   
-
   const handleDeleteProduct = async (productId: number) => {
     try {
       await axios.delete(`https://api.escuelajs.co/api/v1/products/${productId}`);
@@ -130,8 +164,6 @@ const Products: React.FC = () => {
           setEditedProduct(product ? { category: { id: 0, name: "", image: "" }, product } : null)}
         categories={categories} // Asegúrate de que CreateForm acepte esta prop
       />
-
-      <Title>Lista de Productos</Title>
       <Table 
         data={products}
         setDataToEdit={(product: Product | null) => 
@@ -143,4 +175,5 @@ const Products: React.FC = () => {
 };
 
 export default Products;
+
 

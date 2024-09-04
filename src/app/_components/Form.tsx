@@ -1,10 +1,9 @@
-"use client";
 import React, { FormEvent, MouseEvent, useState, useEffect } from 'react';
-import { Product, Category } from "../_interfaces/productsInterfaces"
+import { Product, Category } from "../_interfaces/productsInterfaces";
 import styled from "styled-components";
 
 const Form = styled.form`
-padding: 15px;
+  padding: 15px;
   border-radius: 20px;
   width: 50%;
   display: flex;
@@ -21,15 +20,15 @@ const Select = styled.select`
   background-color: #f7f7f7;
   border: 1px solid #ccc;
   border-radius: 4px;
-  appearance: none; /* Esto elimina el icono por defecto en algunos navegadores */
+  appearance: none;
   cursor: pointer;
 
   &:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }`
-;
+  }
+`;
 
 const Option = styled.option`
   padding: 0.5em;
@@ -40,15 +39,16 @@ const Option = styled.option`
   &:hover {
     background-color: #007bff;
     color: #fff;
-  }`;
+  }
+`;
 
 const Div = styled.div`
   margin: 15px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;`
-  ;
+  align-items: center;
+`;
 
 const Title = styled.h2`
   margin-top: 15px;
@@ -56,16 +56,16 @@ const Title = styled.h2`
   margin-bottom: 20px;
   color: black;
   font-weight: bold;
-  font-size: 15pt;`
-;
+  font-size: 15pt;
+`;
 
 const Input = styled.input`
   border-radius: 10px;
   border: 1px #ccc solid;
   padding: 7px;
   font-size: small;
-  color: black;`
-;
+  color: black;
+`;
 
 const Button = styled.button`
   margin-top: 5px;
@@ -82,15 +82,15 @@ const Button = styled.button`
   &:hover {
     background-color: green;
     color: white;
-  }`
-;
+  }
+`;
 
 interface CreateFormProps { 
     createData: (product: Product) => void;
     updateData: (product: Product) => void;
     dataToEdit: Product | null;
     setDataToEdit: (data: Product | null) => void;
-    categories: Category[]; // Nueva prop para categorías
+    categories: Category[];
 }
 
 const initialForm: Product = {
@@ -98,14 +98,14 @@ const initialForm: Product = {
     title: "",
     description: "",
     price: 0,
-    images: [ "https://example.com/image.jpg" ],  
+    images: [],  
     category: { id: 0, name: "", image: "" }
 };
 
 const CreateForm: React.FC<CreateFormProps> = ({ createData, updateData, dataToEdit, setDataToEdit, categories }) => {
     const [form, setForm] = useState<Product>(initialForm);
     const [selectedCategory, setSelectedCategory] = useState<string>("");
-  
+
     useEffect(() => {
       if (dataToEdit) {
         setForm(dataToEdit);
@@ -115,49 +115,72 @@ const CreateForm: React.FC<CreateFormProps> = ({ createData, updateData, dataToE
         setSelectedCategory("");
       }
     }, [dataToEdit]);
-  
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const { name, value } = e.target;
-      setForm({ ...form, [name]: value });
+      setForm(prevForm => ({ ...prevForm, [name]: value }));
     };
-  
+
+    
+
     const handleImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-      const newImages = form.images.map((image, i) => i === index ? e.target.value : image);
-      setForm({ ...form, images: newImages });
+      const newImages = [...form.images];
+      newImages[index] = e.target.value;
+      setForm(prevForm => ({ ...prevForm, images: newImages }));
     };
-  
+    
+    const handleAddImage = () => {
+      setForm(prevForm => ({ ...prevForm, images: [...prevForm.images, ""] }));
+    };
+    
+    const handleRemoveImage = (index: number) => {
+      const newImages = form.images.filter((_, i) => i !== index);
+      setForm(prevForm => ({ ...prevForm, images: newImages }));
+    };
+    
+
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const categoryName = e.target.value;
       const selectedCategory = categories.find(cat => cat.name === categoryName);
       
       if (selectedCategory) {
           setSelectedCategory(categoryName);
-          setForm({
-              ...form,
-              category: selectedCategory // Guardar solo la categoría seleccionada
-          });
+          setForm(prevForm => ({
+              ...prevForm,
+              category: selectedCategory
+          }));
       }
     };
-  
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       
       if (!form.id) {
-          form.id = Date.now(); 
+          form.id = Date.now();
           createData(form);
       } else {
           updateData(form);
       }
       handleReset(e);
     };
-  
+
     const handleReset = (e: FormEvent<HTMLFormElement> | MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       setForm(initialForm);
       setDataToEdit(null);
       setSelectedCategory("");
     };
-  
+
+    function cleanImageUrl(imageString: string): string {
+      // Elimina los corchetes y comillas del string
+      const cleanedString = imageString
+        .replace(/^\["/, '') // Quita el inicio con [" 
+        .replace(/"\]$/, '') // Quita el final con "]
+        .replace(/\\\"/g, '"'); // Reemplaza las comillas escapadas por comillas normales
+    
+      return cleanedString;
+    }
+
     return (
       <main>
         <Title>{dataToEdit ? "Editar Producto" : "Agregar Producto"}</Title>
@@ -167,7 +190,6 @@ const CreateForm: React.FC<CreateFormProps> = ({ createData, updateData, dataToE
               type="text"
               name="title"
               placeholder="Escribe el nombre del producto"
-              onBlur={handleChange}
               onChange={handleChange}
               value={form.title}
               required
@@ -176,7 +198,6 @@ const CreateForm: React.FC<CreateFormProps> = ({ createData, updateData, dataToE
               type="text"
               name="description"
               placeholder="Escribe la descripción del producto"
-              onBlur={handleChange}
               onChange={handleChange}
               value={form.description}
               required
@@ -185,22 +206,24 @@ const CreateForm: React.FC<CreateFormProps> = ({ createData, updateData, dataToE
               type="number"
               name="price"
               placeholder="Precio"
-              onBlur={handleChange}
               onChange={handleChange}
               value={form.price}
               required
             />
             {form.images.map((image, index) => (
-              <Input
-                key={index}
-                type="text"
-                name={`image-${index}`}
-                placeholder="URL de la imagen"
-                onBlur={(e) => handleImageChange(index, e)}
-                onChange={(e) => handleImageChange(index, e)}
-                value={image}
-              />
-            ))} <br />
+              <div key={index}>
+                <Input
+                  type="text"
+                  name={`image-${index}`}
+                  placeholder="URL de la imagen"
+                  onChange={(e) => handleImageChange(index, e)}
+                  value={cleanImageUrl(image)}
+                />
+                <Button type="button" onClick={() => handleRemoveImage(index)}>Eliminar Imagen</Button>
+              </div>
+            ))}
+            <Button type="button" onClick={handleAddImage}>Añadir Imagen</Button>
+            <br />
             <Select name="category" value={selectedCategory} onChange={handleCategoryChange}>
               <Option value="">Seleccione una categoría</Option>
               {categories.map(category => (
@@ -217,4 +240,5 @@ const CreateForm: React.FC<CreateFormProps> = ({ createData, updateData, dataToE
     );
   };
 
-  export default CreateForm;
+export default CreateForm;
+

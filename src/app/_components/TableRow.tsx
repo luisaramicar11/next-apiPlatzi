@@ -55,6 +55,16 @@ const Tr = styled.tr`
 const TableRow: React.FC<TableRowProducts> = ({ product, setDataToEdit, deleteData }) => {
   const { id, title, description, price, category, images } = product;
 
+  function cleanImageUrl(imageString: string): string {
+    // Elimina los corchetes y comillas del string
+    const cleanedString = imageString
+      .replace(/^\["/, '') // Quita el inicio con [" 
+      .replace(/"\]$/, '') // Quita el final con "]
+      .replace(/\\\"/g, '"'); // Reemplaza las comillas escapadas por comillas normales
+  
+    return cleanedString;
+  }
+
   return (
     <Tr>
       <Td>{title}</Td>
@@ -64,7 +74,7 @@ const TableRow: React.FC<TableRowProducts> = ({ product, setDataToEdit, deleteDa
       <Td>
         {images.length > 0 && (
           <img 
-            src={images[0]} 
+            src={ cleanImageUrl(images[0])} 
             alt={`Product image`} 
             style={{ width: "50px", height: "50px" }} 
           />

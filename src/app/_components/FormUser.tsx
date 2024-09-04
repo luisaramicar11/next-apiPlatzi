@@ -57,14 +57,14 @@ const Title = styled.h2`
 `;
 
 interface CreateUserFormProps {
-  createData: (user: User) => void;
+  createData: (user: Omit<User, 'id'>) => void; // Cambia a Omit<User, 'id'>
   updateData: (user: User) => void;
   dataToEdit: User | null;
   setDataToEdit: (data: User | null) => void;
 }
 
 const initialForm: User = {
-  id: 0,
+  id: 0, // Inicialmente tiene un ID por defecto, se actualizará cuando sea necesario
   email: "",
   password: "",
   name: "",
@@ -90,10 +90,10 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ createData, updateData,
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!form.id) {
-      form.id = Date.now(); // O usa una lógica de ID diferente
-      createData(form);
+
+    if (!form.id || form.id === 0) {
+      const { id, ...userWithoutId } = form;
+      createData(userWithoutId as Omit<User, 'id'>); 
     } else {
       updateData(form);
     }
@@ -166,3 +166,5 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ createData, updateData,
 };
 
 export default CreateUserForm;
+
+

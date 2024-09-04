@@ -18,15 +18,12 @@ const Title = styled.h2`
   font-weight: bold;
   font-size: 15pt;
 `;
-interface EditedUserState {
-  user: User;
-}
 
 const Users: React.FC = () => {
   const users = useSelector((state: RootState) => state.users.users);
   const dispatch = useDispatch();
 
-  const [editedUser, setEditedUser] = useState<EditedUserState | null>(null);
+  const [editedUser, setEditedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -41,10 +38,10 @@ const Users: React.FC = () => {
     fetchUsers();
   }, [dispatch]);
 
-  const handleCreateUser = async (newUser: User) => {
+  const handleCreateUser = async (newUser: Omit<User, 'id'>) => { 
     try {
-      await axios.post("https://api.escuelajs.co/api/v1/users", newUser);
-      dispatch(createUser(newUser));
+      const response = await axios.post<User>("https://api.escuelajs.co/api/v1/users", newUser);
+      dispatch(createUser(response.data));
       toast.success("Usuario creado exitosamente!");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -56,10 +53,10 @@ const Users: React.FC = () => {
       }
     }
   };
-  
+
   const handleUpdateUser = async (updatedUser: User) => {
     try {
-      await axios.put(`https://api.escuelajs.co/api/v1/users/${updatedUser.id}`, updatedUser);
+      await axios.put<User>(`https://api.escuelajs.co/api/v1/users/${updatedUser.id}`, updatedUser);
       dispatch(updateUser(updatedUser));
       setEditedUser(null);
       toast.success("Usuario actualizado exitosamente!");
@@ -84,20 +81,17 @@ const Users: React.FC = () => {
     <>
       <Title>Formulario Usuarios</Title>
 
-      {/* Renderizar el formulario para crear o editar un usuario */}
       <CreateForm
         createData={handleCreateUser}
         updateData={handleUpdateUser}
-        dataToEdit={editedUser?.user || null}
-        setDataToEdit={(user: User | null) => 
-          setEditedUser(user ? { user } : null)}
+        dataToEdit={editedUser}
+        setDataToEdit={setEditedUser}
       />
 
       <Title>Lista de usuarios</Title>
       <Table 
         data={users}
-        setDataToEdit={(user: User | null) => 
-          setEditedUser(user ? { user } : null)}
+        setDataToEdit={setEditedUser}
         deleteData={handleDeleteUser} 
       />
     </>
@@ -105,3 +99,4 @@ const Users: React.FC = () => {
 };
 
 export default Users;
+

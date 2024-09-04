@@ -36,8 +36,8 @@ const HeaderAdmin: React.FC = () => (
   <Header>
         <Nav>
             <Links>
-                <A href="admin/products">Productos</A>
-                <A href="admin/users">Usuarios</A>
+                <A href="/admin/products">Productos</A>
+                <A href="/admin/users">Usuarios</A>
                 <LogoutButton />
             </Links>
         </Nav>
