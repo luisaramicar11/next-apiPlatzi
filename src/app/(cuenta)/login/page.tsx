@@ -1,10 +1,11 @@
-'use client';
-import { FormEvent } from 'react';
+"use client"
+import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '../../redux/hooks/reduxHooks';
+import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import styled from 'styled-components';
+import { AppDispatch } from '../../redux/store'; 
 
 const Form = styled.form`
   padding: 15px;
@@ -61,15 +62,27 @@ const Button = styled.button`
 
 export default function LoginPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.auth); 
+  const dispatch: AppDispatch = useDispatch(); // Tipado correcto de dispatch
+  const { loading } = useSelector((state: any) => state.auth);
+
+  // State para manejar el formulario
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+  });
+
+  // Manejar cambios en los inputs
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+    const { email, password } = form;
 
     if (!email || !password) {
       toast.error('Por favor, completa todos los campos.');
@@ -83,6 +96,7 @@ export default function LoginPage() {
       const token = resultAction.payload?.access_token;
       if (token) {
         toast.success('Login exitoso!');
+
         localStorage.setItem('authToken', token);
         router.push('/profile');
       }
@@ -99,8 +113,22 @@ export default function LoginPage() {
     <Div>
       <Title>Ingresar</Title>
       <Form onSubmit={handleSubmit}>
-        <Input type="email" name="email" placeholder="Email" required />
-        <Input type="password" name="password" placeholder="Password" required />
+        <Input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <Input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
         <Button type="submit" disabled={loading}>
           {loading ? 'Cargando...' : 'Login'}
         </Button>

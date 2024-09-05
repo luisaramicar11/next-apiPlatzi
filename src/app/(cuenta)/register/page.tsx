@@ -1,10 +1,11 @@
 'use client';
-import { FormEvent } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '../../redux/hooks/reduxHooks'; // Ajusta la ruta según tu estructura de carpetas
+import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../../redux/slices/authSlice'; // Ajusta la ruta según tu estructura de carpetas
 import { toast } from 'react-toastify';
 import styled from 'styled-components';
+import { AppDispatch, RootState } from '../../redux/store'; // Importa el tipo correcto para dispatch y state
 
 // Estilos con styled-components
 const Form = styled.form`
@@ -67,57 +68,85 @@ const Button = styled.button<{ disabled?: boolean }>`
 `;
 
 export default function RegisterPage() {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  const { loading, error } = useAppSelector((state) => state.auth);
+  // Estado para manejar el formulario
+  const [form, setForm] = useState({
+    email: '',
+    name: '',
+    password: '',
+    avatar: '',
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // Manejar cambios en los inputs
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
-    const name = formData.get('name') as string;
-    const password = formData.get('password') as string;
-    const avatar = formData.get('avatar') as string;
+  // Manejar el envío del formulario
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-    if (!email || !name || !password || !avatar) {
+    // Validación básica de campos
+    if (!form.email || !form.name || !form.password || !form.avatar) {
       toast.error('Por favor, completa todos los campos.');
       return;
     }
 
-    const userData = {
-      email,
-      name,
-      password,
-      avatar,
-    };
-
     try {
-      // Despacha la acción registerUser y usa unwrap para manejar el resultado
-      await dispatch(registerUser(userData)).unwrap();
-
+      await dispatch(registerUser(form)).unwrap();
       toast.success('Registro exitoso!');
       router.push('/login');
     } catch (err: any) {
-      // Maneja los errores provenientes del thunk
-      if (err && err.message) {
+      if (err?.message) {
         toast.error(`Registro fallido: ${err.message}`);
       } else {
         toast.error('Registro fallido. Inténtalo de nuevo.');
       }
-      console.error('Error en el registro:', err);
     }
-  }
+  };
 
   return (
     <Div>
       <Title>Registro</Title>
       <Form onSubmit={handleSubmit}>
-        <Input type="email" name="email" placeholder="Email" required />
-        <Input type="text" name="name" placeholder="Nombre" required />
-        <Input type="password" name="password" placeholder="Password" required />
-        <Input type="text" name="avatar" placeholder="Avatar" required />
+        <Input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <Input
+          type="text"
+          name="name"
+          placeholder="Nombre"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <Input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+        <Input
+          type="text"
+          name="avatar"
+          placeholder="Avatar"
+          value={form.avatar}
+          onChange={handleChange}
+          required
+        />
         <Button type="submit" disabled={loading}>
           {loading ? 'Registrando...' : 'Registrar'}
         </Button>
